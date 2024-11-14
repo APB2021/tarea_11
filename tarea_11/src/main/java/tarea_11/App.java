@@ -4,6 +4,7 @@ public class App {
 	public static void main(String[] args) {
 		
 		ConexionBD cnx = new ConexionBD();
+		
 		new Menu().mostrarMenu();
 	}
 }
