@@ -6,33 +6,49 @@ import java.sql.SQLException;
 
 public class ConexionBD {
 
-	// Variables según tu configuración
 	private static final String URL = "jdbc:mysql://localhost:3306/Alumnos24";
-	private static final String USER = "root";
-	private static final String PASSWORD = "root";
+	private static final String USER = "alberto";
+	private static final String PASSWORD = "alberto";
 
-	public static void main(String[] args) {
-
-		// Establecemos la conexión con la BD en nuestro servidor local con el usuario y
-		// la password:
+	/**
+	 * Método para obtener una conexión a la Base de Datos.
+	 * 
+	 * @return Devuelve un objeto Connection ("conexion").
+	 * @author Alberto Polo
+	 */
+	public Connection obtenerConexion() {
 		Connection conexion = null;
+		String mensaje = "Conexión ESTABLECIDA con BD: ";
 
 		try {
+			// Primero obtenemos la conexión
 			conexion = DriverManager.getConnection(URL, USER, PASSWORD);
-			System.out.println("Conexión exitosa a la base de datos.");
+
+			// Obtenemos el nombre de la base de datos
+			String nombreConexion = conexion.getCatalog();
+
+			// Imprimimos el mensaje de conexión de manera visual
+			imprimirDelimitadores(mensaje.length() + nombreConexion.length());
+			System.out.println(mensaje + nombreConexion);
+			imprimirDelimitadores(mensaje.length() + nombreConexion.length());
+
 		} catch (SQLException e) {
-			System.out.println("Error al conectar a la base de datos.");
 			e.printStackTrace();
-		} finally {
-			try {
-				if (conexion != null && !conexion.isClosed()) {
-					conexion.close();
-					System.out.println("Conexión cerrada.");
-				}
-			} catch (SQLException ex) {
-				ex.printStackTrace();
-			}
 		}
 
+		return conexion;
+	}
+
+	/**
+	 * Método para imprimir una línea de delimitadores visuales.
+	 * 
+	 * @param longitud Longitud del mensaje a mostrar.
+	 * @author Alberto Polo
+	 */
+	private void imprimirDelimitadores(int longitud) {
+		for (int i = 0; i < longitud; i++) {
+			System.out.print("=");
+		}
+		System.out.println();
 	}
 }
