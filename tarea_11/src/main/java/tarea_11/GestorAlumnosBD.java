@@ -156,10 +156,11 @@ public class GestorAlumnosBD {
 		}
 	}
 
-	private void mostrarAlumnosEnBD(Connection conexion) {
+	public void mostrarAlumnosEnBD(Connection conexion) {
 		String sql = "SELECT nia, nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo FROM alumno";
 
-		try (PreparedStatement stmt = conexion.prepareStatement(sql); ResultSet resultado = stmt.executeQuery()) {
+		try (PreparedStatement stmt = conexion.prepareStatement(sql);
+				ResultSet resultado = stmt.executeQuery()) {
 
 			System.out.println("Lista de Alumnos:");
 			System.out.println("======================================");

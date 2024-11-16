@@ -36,12 +36,20 @@ public class Menu {
 					System.out.println("Ha elegido: Insertar un nuevo alumno.");
 					gestor.insertarAlumno(conexionBD); // Llamamos al método de la clase GestorAlumnosBD
 				}
+
 				case 2 -> {
 					System.out.println("Ha elegido: Mostrar todos los alumnos.");
-					//gestor.mostrarAlumnosEnBD(conexionBD);
-					
-
+					try (Connection conexion = conexionBD.obtenerConexion()) {
+						if (conexion != null) {
+							gestor.mostrarAlumnosEnBD(conexion);
+						} else {
+							System.out.println("No se pudo establecer la conexión con la base de datos.");
+						}
+					} catch (Exception e) {
+						System.out.println("Ocurrió un error al intentar mostrar los alumnos: " + e.getMessage());
+					}
 				}
+
 				case 3 -> System.out.println("Guardar alumnos en un fichero: (Funcionalidad no implementada aún).");
 				case 4 -> System.out.println("Leer alumnos de un fichero: (Funcionalidad no implementada aún).");
 				case 5 -> System.out.println("Modificar nombre de un alumno: (Funcionalidad no implementada aún).");
