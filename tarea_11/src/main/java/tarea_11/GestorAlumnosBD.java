@@ -1,6 +1,8 @@
 package tarea_11;
 
+import java.io.BufferedWriter;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.sql.Connection;
@@ -188,18 +190,27 @@ public class GestorAlumnosBD {
 	}
 
 	public void guardarAlumnosEnFicheroBinario(Connection conexionBD) {
-		// Definimos los campos explícitos:
+		// Definimos los campos explícitos para la consulta SQL
 		String sql = "SELECT nia, nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo FROM alumno";
+
+		// Solicitamos si el usuario quiere elegir un nombre personalizado para el
+		// archivo
+		System.out.print("¿Quieres darle un nombre personalizado al archivo? (sí/no): ");
+		String respuesta = sc.nextLine().trim().toLowerCase();
+
+		// Si la respuesta es 'si', pedimos el nombre; si no, usamos el nombre por
+		// defecto
+		String nombreArchivo = "src\\main\\java/tarea_11/";
+
+		if ("si".equalsIgnoreCase(respuesta)) {
+			System.out.print("Introduce el nombre del archivo (sin extensión): ");
+			nombreArchivo += sc.nextLine().trim() + ".dat"; // Se añade la extensión .dat
+		} else {
+			nombreArchivo += "alumnos.dat"; // Nombre por defecto
+		}
 
 		try (PreparedStatement sentencia = conexionBD.prepareStatement(sql);
 				ResultSet resultado = sentencia.executeQuery()) {
-
-			// Pedimos el nombre del archivo al usuario o usamos uno predeterminado
-			System.out.print("Introduzca el nombre del archivo (por defecto 'alumnos.dat'): ");
-			String nombreArchivo = sc.nextLine().trim();
-			if (nombreArchivo.isEmpty()) {
-				nombreArchivo = "alumnos.dat"; // Usamos el nombre por defecto si el usuario no introduce uno
-			}
 
 			// Creamos el flujo de salida de objetos para el archivo binario
 			try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(nombreArchivo))) {
@@ -221,6 +232,49 @@ public class GestorAlumnosBD {
 
 		} catch (SQLException e) {
 			// Captura y muestra los errores de la consulta SQL
+			System.err.println("Error al obtener los alumnos de la base de datos: " + e.getMessage());
+		}
+	}
+
+	public void guardarAlumnosEnFicheroTexto(Connection conexionBD) {
+		// Definimos los campos explícitos para la consulta SQL
+		String sql = "SELECT nia, nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo FROM alumno";
+
+		// Preguntamos al usuario si desea personalizar el nombre del archivo
+		System.out.print("¿Quieres darle un nombre personalizado al archivo? (sí/no): ");
+		String respuesta = sc.nextLine().trim().toLowerCase();
+
+		// Ruta base para guardar el archivo
+		String nombreArchivo = "src\\main\\java/tarea_11/";
+
+		if ("si".equalsIgnoreCase(respuesta)) {
+			System.out.print("Introduce el nombre del archivo (sin extensión): ");
+			nombreArchivo += sc.nextLine().trim() + ".txt"; // Añade la extensión .txt
+		} else {
+			nombreArchivo += "alumnos.txt"; // Nombre por defecto
+		}
+
+		try (PreparedStatement sentencia = conexionBD.prepareStatement(sql);
+				ResultSet resultado = sentencia.executeQuery()) {
+
+			// Creamos el flujo de salida para escribir en el archivo de texto
+			try (BufferedWriter writer = new BufferedWriter(new FileWriter(nombreArchivo))) {
+				// Iteramos por los resultados y escribimos los datos en el archivo
+				while (resultado.next()) {
+					String alumno = String.format(
+							"NIA: %d, Nombre: %s, Apellidos: %s, Género: %c, Fecha de Nacimiento: %s, Ciclo: %s, Curso: %s, Grupo: %s",
+							resultado.getInt("nia"), resultado.getString("nombre"), resultado.getString("apellidos"),
+							resultado.getString("genero").charAt(0), resultado.getDate("fechaNacimiento"),
+							resultado.getString("ciclo"), resultado.getString("curso"), resultado.getString("grupo"));
+					writer.write(alumno);
+					writer.newLine(); // Salto de línea para separar alumnos
+				}
+				System.out.println("Alumnos guardados en el archivo de texto: " + nombreArchivo);
+			} catch (IOException e) {
+				System.err.println("Error al guardar los alumnos en el archivo de texto: " + e.getMessage());
+			}
+
+		} catch (SQLException e) {
 			System.err.println("Error al obtener los alumnos de la base de datos: " + e.getMessage());
 		}
 	}

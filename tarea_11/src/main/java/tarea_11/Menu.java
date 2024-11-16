@@ -32,23 +32,23 @@ public class Menu {
 				switch (opcion) {
 				case 1 -> {
 					System.out.println("Ha elegido: Insertar un nuevo alumno.");
-					gestor.insertarAlumno(conexionBD); // Llamada al método de la clase GestorAlumnosBD
+					gestor.insertarAlumno(conexionBD);
 				}
 
 				case 2 -> {
 					System.out.println("Ha elegido: Mostrar todos los alumnos en consola.");
-					gestor.mostrarAlumnosEnBD(conexionBD.obtenerConexion()); // Llamada al método de la clase
-																				// GestorAlumnosBD
+					gestor.mostrarAlumnosEnBD(conexionBD.obtenerConexion());
 				}
 
 				case 3 -> {
 					System.out.println("Ha elegido: Guardar alumnos en un fichero binario.");
-					gestor.guardarAlumnosEnFicheroBinario(conexionBD.obtenerConexion()); // Llamada al método de la
-																							// clase GestorAlumnosBD
+					gestor.guardarAlumnosEnFicheroBinario(conexionBD.obtenerConexion());
 				}
 
-				case 4 ->
-					System.out.println("Guardar alumnos en un fichero de texto: (Funcionalidad no implementada aún).");
+				case 4 -> {
+					System.out.println("Ha elegido: Guardar alumnos en un fichero de texto.");
+					gestor.guardarAlumnosEnFicheroTexto(conexionBD.obtenerConexion());
+				}
 				case 5 -> System.out.println(
 						"Leer alumnos de un fichero binario y guardarlos en una BD: (Funcionalidad no implementada aún).");
 				case 6 -> System.out.println(
