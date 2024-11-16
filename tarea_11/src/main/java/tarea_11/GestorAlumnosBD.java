@@ -1,9 +1,10 @@
 package tarea_11;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Scanner;
 
 public class GestorAlumnosBD {
@@ -148,13 +149,39 @@ public class GestorAlumnosBD {
 			stmt.setString(7, alumno.getGrupo());
 
 			int filasInsertadas = stmt.executeUpdate();
-			mostrarMensaje(
-					filasInsertadas > 0 ? "Alumno correctamente insertado en la BD." : "No se pudo insertar el alumno en  la BD.");
+			mostrarMensaje(filasInsertadas > 0 ? "Alumno correctamente insertado en la BD."
+					: "No se pudo insertar el alumno en  la BD.");
 		} catch (SQLException e) {
 			mostrarMensaje("Error al insertar el alumno: " + e.getMessage());
 		}
 	}
-	private void mostrarAlumnosEnBD() {
-		
+
+	private void mostrarAlumnosEnBD(Connection conexion) {
+		String sql = "SELECT nia, nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo FROM alumno";
+
+		try (PreparedStatement stmt = conexion.prepareStatement(sql); ResultSet resultado = stmt.executeQuery()) {
+
+			System.out.println("Lista de Alumnos:");
+			System.out.println("======================================");
+
+			while (resultado.next()) {
+				int nia = resultado.getInt("nia");
+				String nombre = resultado.getString("nombre");
+				String apellidos = resultado.getString("apellidos");
+				char genero = resultado.getString("genero").charAt(0);
+				java.sql.Date fechaNacimiento = resultado.getDate("fechaNacimiento");
+				String ciclo = resultado.getString("ciclo");
+				String curso = resultado.getString("curso");
+				String grupo = resultado.getString("grupo");
+
+				// Formato salida en consola:
+				System.out.printf(
+						"NIA: %d, Nombre: %s, Apellidos: %s, Género: %c, Fecha de Nacimiento: %s, Ciclo: %s, Curso: %s, Grupo: %s%n",
+						nia, nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo);
+			}
+		} catch (SQLException e) {
+			System.out.println("Error al obtener la lista de alumnos: " + e.getMessage());
+		}
 	}
+
 }

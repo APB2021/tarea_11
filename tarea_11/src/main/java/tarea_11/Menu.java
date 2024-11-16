@@ -1,5 +1,6 @@
 package tarea_11;
 
+import java.util.List;
 import java.util.Scanner;
 import java.sql.Connection;
 
@@ -37,6 +38,7 @@ public class Menu {
 				}
 				case 2 -> {
 					System.out.println("Ha elegido: Mostrar todos los alumnos.");
+					//gestor.mostrarAlumnosEnBD(conexionBD);
 					
 
 				}
