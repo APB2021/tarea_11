@@ -1,9 +1,11 @@
 package tarea_11;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -283,61 +285,124 @@ public class GestorAlumnosBD {
 	}
 
 	public void leerAlumnosDeFicheroBinarioYGuardarlosEnBD(Connection conexionBD) {
-	    // Exclusión del campo nia: La instrucción SQL omite nia, ya que los valores para este campo los generará automáticamente la base de datos.
-	    String sql = "INSERT INTO alumno (nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo) VALUES (?, ?, ?, ?, ?, ?, ?)";
-	    String archivoPorDefecto = "src\\main\\java/tarea_11/alumnos.dat";
+		// Exclusión del campo nia: La instrucción SQL omite nia, ya que los valores
+		// para este campo los generará automáticamente la base de datos.
+		String sql = "INSERT INTO alumno (nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo) VALUES (?, ?, ?, ?, ?, ?, ?)";
+		String archivoPorDefecto = "src\\main\\java/tarea_11/alumnos.dat";
 
-	    try {
-	        // Preguntar al usuario si desea usar un archivo diferente
-	        System.out.print("El archivo predeterminado es 'alumnos.dat'. ¿Quieres especificar otro archivo para leer? (si/no): ");
-	        String respuesta = sc.nextLine().trim().toLowerCase();
-	        
-	        // Únicamente se aceptan las respuestas si o no.
-	        while (!respuesta.equalsIgnoreCase("si") && !respuesta.equalsIgnoreCase("no")) {
-	            System.out.print("Por favor, responde 'si' o 'no': ");
-	            respuesta = sc.nextLine().trim().toLowerCase();
-	        }
+		try {
+			// Preguntar al usuario si desea usar un archivo diferente
+			System.out.print(
+					"El archivo predeterminado es 'alumnos.dat'. ¿Quieres especificar otro archivo para leer? (si/no): ");
+			String respuesta = sc.nextLine().trim().toLowerCase();
 
-	        String nombreArchivo = archivoPorDefecto;
-	        if ("si".equals(respuesta)) {
-	            System.out.print("Introduce el nombre del archivo binario personalizado: ");
-	            nombreArchivo =  "src\\main\\java/tarea_11/" + sc.nextLine().trim();
-	        }
+			// Únicamente se aceptan las respuestas si o no.
+			while (!respuesta.equalsIgnoreCase("si") && !respuesta.equalsIgnoreCase("no")) {
+				System.out.print("Por favor, responde 'si' o 'no': ");
+				respuesta = sc.nextLine().trim().toLowerCase();
+			}
 
-	        // Leer archivo binario
-	        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(nombreArchivo));
-	             PreparedStatement sentencia = conexionBD.prepareStatement(sql)) {
+			String nombreArchivo = archivoPorDefecto;
+			if ("si".equals(respuesta)) {
+				System.out.print("Introduce el nombre del archivo binario personalizado: ");
+				nombreArchivo = "src\\main\\java/tarea_11/" + sc.nextLine().trim();
+			}
 
-	            while (true) {
-	                try {
-	                    // Leer objeto Alumno del archivo binario
-	                    Alumno alumno = (Alumno) ois.readObject();
+			// Leer archivo binario
+			try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(nombreArchivo));
+					PreparedStatement sentencia = conexionBD.prepareStatement(sql)) {
 
-	                    // Configurar los parámetros para la inserción (sin nia)
-	                    sentencia.setString(1, alumno.getNombre());
-	                    sentencia.setString(2, alumno.getApellidos());
-	                    sentencia.setString(3, String.valueOf(alumno.getGenero()));
-	                    sentencia.setDate(4, new java.sql.Date(alumno.getFechaNacimiento().getTime())); // Usamos java.sql.Date para la base de datos
-	                    sentencia.setString(5, alumno.getCiclo());
-	                    sentencia.setString(6, alumno.getCurso());
-	                    sentencia.setString(7, alumno.getGrupo());
+				while (true) {
+					try {
+						// Leer objeto Alumno del archivo binario
+						Alumno alumno = (Alumno) ois.readObject();
 
-	                    // Ejecutar la inserción
-	                    sentencia.executeUpdate();
-	                } catch (EOFException e) {
-	                    // Fin del archivo binario
-	                    break;
-	                } catch (ClassNotFoundException e) {
-	                    System.err.println("Error al leer el archivo binario: Clase no encontrada. " + e.getMessage());
-	                    break;  // Para detener la lectura y evitar un bucle infinito en caso de error.
-	                }
-	            }
-	            System.out.println("Alumnos insertados en la base de datos desde el archivo binario.");
-	        } catch (IOException e) {
-	            System.err.println("Error al leer el archivo binario: " + e.getMessage());
-	        }
-	    } catch (SQLException e) {
-	        System.err.println("Error al insertar los alumnos en la base de datos: " + e.getMessage());
-	    }
+						// Configurar los parámetros para la inserción (sin nia)
+						sentencia.setString(1, alumno.getNombre());
+						sentencia.setString(2, alumno.getApellidos());
+						sentencia.setString(3, String.valueOf(alumno.getGenero()));
+						sentencia.setDate(4, new java.sql.Date(alumno.getFechaNacimiento().getTime())); // Usamos
+																										// java.sql.Date
+																										// para la base
+																										// de datos
+						sentencia.setString(5, alumno.getCiclo());
+						sentencia.setString(6, alumno.getCurso());
+						sentencia.setString(7, alumno.getGrupo());
+
+						// Ejecutar la inserción
+						sentencia.executeUpdate();
+					} catch (EOFException e) {
+						// Fin del archivo binario
+						break;
+					} catch (ClassNotFoundException e) {
+						System.err.println("Error al leer el archivo binario: Clase no encontrada. " + e.getMessage());
+						break; // Para detener la lectura y evitar un bucle infinito en caso de error.
+					}
+				}
+				System.out.println("Alumnos insertados en la base de datos desde el archivo binario.");
+			} catch (IOException e) {
+				System.err.println("Error al leer el archivo binario: " + e.getMessage());
+			}
+		} catch (SQLException e) {
+			System.err.println("Error al insertar los alumnos en la base de datos: " + e.getMessage());
+		}
 	}
+
+	public void leerAlumnosDeFicheroTextoYGuardarlosEnBD(Connection conexionBD) {
+		// Exclusión del campo nia: La instrucción SQL omite nia, ya que los valores
+		// para este campo los generará automáticamente la base de datos.
+		String sql = "INSERT INTO alumno (nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo) VALUES (?, ?, ?, ?, ?, ?, ?)";
+		String archivoPorDefecto = "src\\main\\java/tarea_11/alumnos.txt";
+
+		try {
+			// Preguntar al usuario si desea usar un archivo diferente
+			System.out.print(
+					"El archivo predeterminado es 'alumnos.txt'. ¿Quieres especificar otro archivo para leer? (si/no): ");
+			String respuesta = sc.nextLine().trim().toLowerCase();
+
+			// Únicamente se aceptan las respuestas si o no.
+			while (!respuesta.equalsIgnoreCase("si") && !respuesta.equalsIgnoreCase("no")) {
+				System.out.print("Por favor, responde 'si' o 'no': ");
+				respuesta = sc.nextLine().trim().toLowerCase();
+			}
+
+			String nombreArchivo = archivoPorDefecto;
+			if ("si".equals(respuesta)) {
+				System.out.print("Introduce el nombre del archivo de texto personalizado: ");
+				nombreArchivo = "src\\main\\java/tarea_11/" + sc.nextLine().trim();
+			}
+
+			// Leer archivo de texto
+			try (BufferedReader br = new BufferedReader(new FileReader(nombreArchivo));
+					PreparedStatement sentencia = conexionBD.prepareStatement(sql)) {
+
+				String linea;
+				while ((linea = br.readLine()) != null) {
+					// Suponiendo que el formato del archivo de texto es:
+					// nombre|apellidos|genero|fechaNacimiento|ciclo|curso|grupo
+					String[] datos = linea.split("\\|"); // Usamos el carácter '|' como delimitador
+
+					if (datos.length == 7) { // Asegurarse de que la línea tiene los 7 campos esperados
+						// Configurar los parámetros para la inserción (sin nia)
+						sentencia.setString(1, datos[0]); // nombre
+						sentencia.setString(2, datos[1]); // apellidos
+						sentencia.setString(3, datos[2]); // genero
+						sentencia.setDate(4, java.sql.Date.valueOf(datos[3])); // fechaNacimiento
+						sentencia.setString(5, datos[4]); // ciclo
+						sentencia.setString(6, datos[5]); // curso
+						sentencia.setString(7, datos[6]); // grupo
+
+						// Ejecutar la inserción
+						sentencia.executeUpdate();
+					}
+				}
+				System.out.println("Alumnos insertados en la base de datos desde el archivo de texto.");
+			} catch (IOException e) {
+				System.err.println("Error al leer el archivo de texto: " + e.getMessage());
+			}
+		} catch (SQLException e) {
+			System.err.println("Error al insertar los alumnos en la base de datos: " + e.getMessage());
+		}
+	}
+
 }
