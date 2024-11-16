@@ -10,17 +10,21 @@ public class GestorAlumnosBD {
 
 	private static final Scanner sc = new Scanner(System.in);
 
-	// Método para insertar un alumno en la base de datos
-
+	/**
+	 * Método para insertar un alumno en la base de datos.
+	 * 
+	 * @param conexionBD es el objeto con la conexión a la BD.
+	 * @author Alberto Polo
+	 */
 	public void insertarAlumno(ConexionBD conexionBD) {
 		int nia = obtenerNIA(conexionBD);
-		String nombre = obtenerTexto("Ingrese el Nombre: ");
-		String apellidos = obtenerTexto("Ingrese los Apellidos: ");
+		String nombre = obtenerTexto("Nombre del alumno: ");
+		String apellidos = obtenerTexto("Apellidos: ");
 		char genero = obtenerGenero();
 		java.sql.Date fechaNacimiento = obtenerFechaNacimiento();
-		String ciclo = obtenerTexto("Ingrese el Ciclo: ");
-		String curso = obtenerTexto("Ingrese el Curso: ");
-		String grupo = obtenerTexto("Ingrese el Grupo: ");
+		String ciclo = obtenerTexto("Ciclo: ");
+		String curso = obtenerTexto("Curso: ");
+		String grupo = obtenerTexto("Grupo: ");
 
 		Alumno alumno = new Alumno(nia, nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo);
 
@@ -35,38 +39,67 @@ public class GestorAlumnosBD {
 		}
 	}
 
+	/**
+	 * Método para obtener el nia del alumno que es generado por la BD.
+	 * 
+	 * @param conexionBD es el objeto con la conexión a la BD.
+	 * @return Devuelve el nia del alumno que se obtiene de la BD porque es
+	 *         autoincremental.
+	 * @author Alberto Polo
+	 */
 	private int obtenerNIA(ConexionBD conexionBD) {
-		// Este método obtiene el NIA automáticamente de la base de datos
+		// Este método obtiene el nia automáticamente de la base de datos
 		try (Connection conexion = conexionBD.obtenerConexion()) {
 			String sql = "SELECT AUTO_INCREMENT FROM information_schema.tables WHERE table_name = 'alumno' AND table_schema = DATABASE();";
 			try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
 				try (java.sql.ResultSet rs = stmt.executeQuery()) {
 					if (rs.next()) {
-						return rs.getInt("AUTO_INCREMENT"); // Devolver el próximo valor de autoincremento
+						return rs.getInt("AUTO_INCREMENT"); // Devolverá el próximo valor de autoincremento
 					}
 				}
 			}
 		} catch (SQLException e) {
-			mostrarMensaje("Error al obtener el NIA: " + e.getMessage());
+			mostrarMensaje("Error al obtener el nia: " + e.getMessage());
 		}
 		return -1; // Valor predeterminado en caso de error
 	}
 
+	/**
+	 * Método para recoger la respuesta del usuario.
+	 * 
+	 * @param mensaje es un String con el contenido del mensaje en cada supuesto.
+	 * @return Devuelve la respuesta del usuario como String al mensaje anterior
+	 *         según convenga.
+	 * @author Alberto Polo
+	 */
 	private String obtenerTexto(String mensaje) {
 		System.out.print(mensaje);
 		return sc.nextLine().toUpperCase();
 	}
 
+	/**
+	 * Método para obtener el género del alumno.
+	 * 
+	 * @return devolverá 'M' o 'F' si el usuario responde correctamente.
+	 * @author Alberto Polo
+	 */
 	private char obtenerGenero() {
 		while (true) {
-			System.out.print("Ingrese el Género (M/F): ");
-			String input = sc.nextLine().toUpperCase();
-			if (input.equals("M") || input.equals("F"))
-				return input.charAt(0);
-			mostrarMensaje("Por favor, ingrese 'M' para Masculino o 'F' para Femenino.");
+			System.out.print("Género (M/F): ");
+			String respuestaGenero = sc.nextLine().toUpperCase();
+			if (respuestaGenero.equals("M") || respuestaGenero.equals("F"))
+				return respuestaGenero.charAt(0);
+			mostrarMensaje("Por favor, teclee 'M' para Masculino o 'F' para Femenino.");
 		}
 	}
 
+	/**
+	 * Método que se ocupa de recoger la fecha de nacimiento del alumno y
+	 * convertirla al formato java.sql.Date
+	 * 
+	 * @return devuelve la fecha en formato sql para la BD MySQL
+	 * @author Alberto Polo
+	 */
 	private java.sql.Date obtenerFechaNacimiento() {
 		while (true) {
 			System.out.print("Ingrese la Fecha de Nacimiento (dd-MM-yyyy): ");
@@ -80,7 +113,7 @@ public class GestorAlumnosBD {
 				// Convertir LocalDate a java.sql.Date
 				return java.sql.Date.valueOf(fecha);
 			} catch (java.time.format.DateTimeParseException e) {
-				mostrarMensaje("Formato de fecha inválido. El formato debe ser dd-MM-yyyy.");
+				mostrarMensaje("Formato de fecha incorrecto. El formato debe ser dd-MM-aaaa.");
 			}
 		}
 	}
@@ -89,6 +122,14 @@ public class GestorAlumnosBD {
 		System.out.println(mensaje);
 	}
 
+	/**
+	 * Método para insertar 1 alumno en la BD MySQL
+	 * 
+	 * @param conexion este primer parámetro recibe el objeto de la conexión a la
+	 *                 BD.
+	 * @param alumno   el segundo parámetro recibe el objeto de la clase Alumno
+	 * @author Alberto Polo
+	 */
 	private void insertarAlumnoEnBD(Connection conexion, Alumno alumno) {
 		String sql = "INSERT INTO alumno ( nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo) "
 				+ "VALUES ( ?, ?, ?, ?, ?, ?, ?)";
@@ -108,9 +149,12 @@ public class GestorAlumnosBD {
 
 			int filasInsertadas = stmt.executeUpdate();
 			mostrarMensaje(
-					filasInsertadas > 0 ? "Alumno insertado en la base de datos." : "No se pudo insertar el alumno.");
+					filasInsertadas > 0 ? "Alumno correctamente insertado en la BD." : "No se pudo insertar el alumno en  la BD.");
 		} catch (SQLException e) {
 			mostrarMensaje("Error al insertar el alumno: " + e.getMessage());
 		}
+	}
+	private void mostrarAlumnosEnBD() {
+		
 	}
 }

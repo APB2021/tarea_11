@@ -4,9 +4,14 @@ import java.util.Scanner;
 import java.sql.Connection;
 
 public class Menu {
-
+	/**
+	 * Utilizamos el Scanner como static para no tener que cerrarlo:
+	 */
 	private static final Scanner sc = new Scanner(System.in);
 
+	/**
+	 * Método dedicado a presentar el menú de la App.
+	 */
 	public void mostrarMenu() {
 
 		// Objeto para gestionar la conexión
@@ -28,9 +33,13 @@ public class Menu {
 				switch (opcion) {
 				case 1 -> {
 					System.out.println("Ha elegido: Insertar un nuevo alumno.");
-					gestor.insertarAlumno(conexionBD); // Llamamos al método en GestorAlumnosBD
+					gestor.insertarAlumno(conexionBD); // Llamamos al método de la clase GestorAlumnosBD
 				}
-				case 2 -> System.out.println("Mostrar todos los alumnos: (Funcionalidad no implementada aún).");
+				case 2 -> {
+					System.out.println("Ha elegido: Mostrar todos los alumnos.");
+					
+
+				}
 				case 3 -> System.out.println("Guardar alumnos en un fichero: (Funcionalidad no implementada aún).");
 				case 4 -> System.out.println("Leer alumnos de un fichero: (Funcionalidad no implementada aún).");
 				case 5 -> System.out.println("Modificar nombre de un alumno: (Funcionalidad no implementada aún).");
@@ -48,6 +57,9 @@ public class Menu {
 		}
 	}
 
+	/**
+	 * Método para presentar el texto del menú de forma más limpia:
+	 */
 	private void mostrarOpciones() {
 		System.out.println(
 				"""
