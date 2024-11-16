@@ -1,10 +1,16 @@
 package tarea_11;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Scanner;
 
 public class GestorAlumnosBD {
@@ -18,19 +24,17 @@ public class GestorAlumnosBD {
 	 * @author Alberto Polo
 	 */
 	public void insertarAlumno(ConexionBD conexionBD) {
-		int nia = obtenerNIA(conexionBD);
-		String nombre = obtenerTexto("Nombre del alumno: ");
-		String apellidos = obtenerTexto("Apellidos: ");
-		char genero = obtenerGenero();
-		java.sql.Date fechaNacimiento = obtenerFechaNacimiento();
-		String ciclo = obtenerTexto("Ciclo: ");
-		String curso = obtenerTexto("Curso: ");
-		String grupo = obtenerTexto("Grupo: ");
-
-		Alumno alumno = new Alumno(nia, nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo);
-
 		try (Connection conexion = conexionBD.obtenerConexion()) {
 			if (conexion != null) {
+				int nia = obtenerNIA(conexionBD);
+				String nombre = obtenerTexto("Nombre del alumno: ");
+				String apellidos = obtenerTexto("Apellidos: ");
+				char genero = obtenerGenero();
+				Date fechaNacimiento = obtenerFechaNacimiento();
+				String ciclo = obtenerTexto("Ciclo: ");
+				String curso = obtenerTexto("Curso: ");
+				String grupo = obtenerTexto("Grupo: ");
+				Alumno alumno = new Alumno(nia, nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo);
 				insertarAlumnoEnBD(conexion, alumno);
 			} else {
 				mostrarMensaje("No se pudo establecer la conexión a la base de datos.");
@@ -49,13 +53,12 @@ public class GestorAlumnosBD {
 	 * @author Alberto Polo
 	 */
 	private int obtenerNIA(ConexionBD conexionBD) {
-		// Este método obtiene el nia automáticamente de la base de datos
 		try (Connection conexion = conexionBD.obtenerConexion()) {
 			String sql = "SELECT AUTO_INCREMENT FROM information_schema.tables WHERE table_name = 'alumno' AND table_schema = DATABASE();";
-			try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
-				try (java.sql.ResultSet rs = stmt.executeQuery()) {
-					if (rs.next()) {
-						return rs.getInt("AUTO_INCREMENT"); // Devolverá el próximo valor de autoincremento
+			try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
+				try (ResultSet resultado = sentencia.executeQuery()) {
+					if (resultado.next()) {
+						return resultado.getInt("AUTO_INCREMENT"); // Devolverá el próximo valor de autoincremento
 					}
 				}
 			}
@@ -101,19 +104,18 @@ public class GestorAlumnosBD {
 	 * @return devuelve la fecha en formato sql para la BD MySQL
 	 * @author Alberto Polo
 	 */
-	private java.sql.Date obtenerFechaNacimiento() {
+	private Date obtenerFechaNacimiento() {
 		while (true) {
 			System.out.print("Ingrese la Fecha de Nacimiento (dd-MM-yyyy): ");
-			String inputFecha = sc.nextLine();
+			String fechaIntroducida = sc.nextLine();
 			try {
-				// Crear el formateador para el formato 'dd-MM-yyyy'
-				java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter
-						.ofPattern("dd-MM-yyyy");
-				// Convertir la fecha ingresada en LocalDate
-				java.time.LocalDate fecha = java.time.LocalDate.parse(inputFecha, formatter);
+				// Creamos el formateador para el formato 'dd-MM-yyyy'
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+				// Convertir la fecha introducida por el usuario en LocalDate
+				LocalDate fecha = LocalDate.parse(fechaIntroducida, formatter);
 				// Convertir LocalDate a java.sql.Date
-				return java.sql.Date.valueOf(fecha);
-			} catch (java.time.format.DateTimeParseException e) {
+				return Date.valueOf(fecha);
+			} catch (DateTimeParseException e) {
 				mostrarMensaje("Formato de fecha incorrecto. El formato debe ser dd-MM-aaaa.");
 			}
 		}
@@ -135,20 +137,20 @@ public class GestorAlumnosBD {
 		String sql = "INSERT INTO alumno ( nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo) "
 				+ "VALUES ( ?, ?, ?, ?, ?, ?, ?)";
 
-		try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
+		try (PreparedStatement sentencia = conexion.prepareStatement(sql)) {
 
-			stmt.setString(1, alumno.getNombre());
-			stmt.setString(2, alumno.getApellidos());
-			stmt.setString(3, String.valueOf(alumno.getGenero()));
+			sentencia.setString(1, alumno.getNombre());
+			sentencia.setString(2, alumno.getApellidos());
+			sentencia.setString(3, String.valueOf(alumno.getGenero()));
 
-			java.sql.Date fecha = (Date) alumno.getFechaNacimiento();
-			stmt.setDate(4, new java.sql.Date(fecha.getTime()));
+			Date fecha = (Date) alumno.getFechaNacimiento();
+			sentencia.setDate(4, new Date(fecha.getTime()));
 
-			stmt.setString(5, alumno.getCiclo());
-			stmt.setString(6, alumno.getCurso());
-			stmt.setString(7, alumno.getGrupo());
+			sentencia.setString(5, alumno.getCiclo());
+			sentencia.setString(6, alumno.getCurso());
+			sentencia.setString(7, alumno.getGrupo());
 
-			int filasInsertadas = stmt.executeUpdate();
+			int filasInsertadas = sentencia.executeUpdate();
 			mostrarMensaje(filasInsertadas > 0 ? "Alumno correctamente insertado en la BD."
 					: "No se pudo insertar el alumno en  la BD.");
 		} catch (SQLException e) {
@@ -159,8 +161,8 @@ public class GestorAlumnosBD {
 	public void mostrarAlumnosEnBD(Connection conexion) {
 		String sql = "SELECT nia, nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo FROM alumno";
 
-		try (PreparedStatement stmt = conexion.prepareStatement(sql);
-				ResultSet resultado = stmt.executeQuery()) {
+		try (PreparedStatement sentencia = conexion.prepareStatement(sql);
+				ResultSet resultado = sentencia.executeQuery()) {
 
 			System.out.println("Lista de Alumnos:");
 			System.out.println("======================================");
@@ -170,7 +172,7 @@ public class GestorAlumnosBD {
 				String nombre = resultado.getString("nombre");
 				String apellidos = resultado.getString("apellidos");
 				char genero = resultado.getString("genero").charAt(0);
-				java.sql.Date fechaNacimiento = resultado.getDate("fechaNacimiento");
+				Date fechaNacimiento = resultado.getDate("fechaNacimiento");
 				String ciclo = resultado.getString("ciclo");
 				String curso = resultado.getString("curso");
 				String grupo = resultado.getString("grupo");
@@ -182,6 +184,44 @@ public class GestorAlumnosBD {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error al obtener la lista de alumnos: " + e.getMessage());
+		}
+	}
+
+	public void guardarAlumnosEnFicheroBinario(Connection conexionBD) {
+		// Definimos los campos explícitos:
+		String sql = "SELECT nia, nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo FROM alumno";
+
+		try (PreparedStatement sentencia = conexionBD.prepareStatement(sql);
+				ResultSet resultado = sentencia.executeQuery()) {
+
+			// Pedimos el nombre del archivo al usuario o usamos uno predeterminado
+			System.out.print("Introduzca el nombre del archivo (por defecto 'alumnos.dat'): ");
+			String nombreArchivo = sc.nextLine().trim();
+			if (nombreArchivo.isEmpty()) {
+				nombreArchivo = "alumnos.dat"; // Usamos el nombre por defecto si el usuario no introduce uno
+			}
+
+			// Creamos el flujo de salida de objetos para el archivo binario
+			try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(nombreArchivo))) {
+				// Procesamos todos los alumnos de la base de datos
+				while (resultado.next()) {
+					// Creamos un objeto Alumno con los datos del ResultSet
+					Alumno alumno = new Alumno(resultado.getInt("nia"), resultado.getString("nombre"),
+							resultado.getString("apellidos"), resultado.getString("genero").charAt(0),
+							resultado.getDate("fechaNacimiento"), resultado.getString("ciclo"),
+							resultado.getString("curso"), resultado.getString("grupo"));
+					// Escribimos el objeto Alumno en el archivo binario
+					oos.writeObject(alumno);
+				}
+				System.out.println("Alumnos guardados en el archivo binario: " + nombreArchivo);
+			} catch (IOException e) {
+				// Captura y muestra los errores al guardar el archivo
+				System.err.println("Error al guardar los alumnos en el archivo binario: " + e.getMessage());
+			}
+
+		} catch (SQLException e) {
+			// Captura y muestra los errores de la consulta SQL
+			System.err.println("Error al obtener los alumnos de la base de datos: " + e.getMessage());
 		}
 	}
 

@@ -33,7 +33,7 @@ public class ConexionBD {
 			imprimirDelimitadores(mensaje.length() + nombreConexion.length());
 
 		} catch (SQLException e) {
-			e.printStackTrace();
+			System.err.println("Error de conexión: " + e.getMessage());
 		}
 
 		return conexion;

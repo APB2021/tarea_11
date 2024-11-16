@@ -1,8 +1,6 @@
 package tarea_11;
 
-import java.util.List;
 import java.util.Scanner;
-import java.sql.Connection;
 
 public class Menu {
 	/**
@@ -23,42 +21,55 @@ public class Menu {
 
 		int opcion = -1;
 
-		while (opcion != 10) {
+		while (opcion != 14) {
 			mostrarOpciones();
 
 			try {
-				System.out.print("Por favor, seleccione una opción (Entre 1 y 10): ");
+				System.out.print("Por favor, seleccione una opción (Entre 1 y 14): ");
 				opcion = sc.nextInt();
 				sc.nextLine(); // Limpiar buffer
 
 				switch (opcion) {
 				case 1 -> {
 					System.out.println("Ha elegido: Insertar un nuevo alumno.");
-					gestor.insertarAlumno(conexionBD); // Llamamos al método de la clase GestorAlumnosBD
+					gestor.insertarAlumno(conexionBD); // Llamada al método de la clase GestorAlumnosBD
 				}
 
 				case 2 -> {
-					System.out.println("Ha elegido: Mostrar todos los alumnos.");
-					try (Connection conexion = conexionBD.obtenerConexion()) {
-						if (conexion != null) {
-							gestor.mostrarAlumnosEnBD(conexion);
-						} else {
-							System.out.println("No se pudo establecer la conexión con la base de datos.");
-						}
-					} catch (Exception e) {
-						System.out.println("Ocurrió un error al intentar mostrar los alumnos: " + e.getMessage());
-					}
+					System.out.println("Ha elegido: Mostrar todos los alumnos en consola.");
+					gestor.mostrarAlumnosEnBD(conexionBD.obtenerConexion()); // Llamada al método de la clase
+																				// GestorAlumnosBD
 				}
 
-				case 3 -> System.out.println("Guardar alumnos en un fichero: (Funcionalidad no implementada aún).");
-				case 4 -> System.out.println("Leer alumnos de un fichero: (Funcionalidad no implementada aún).");
-				case 5 -> System.out.println("Modificar nombre de un alumno: (Funcionalidad no implementada aún).");
-				case 6 -> System.out.println("Eliminar un alumno: (Funcionalidad no implementada aún).");
-				case 7 -> System.out.println("Eliminar alumnos por apellido: (Funcionalidad no implementada aún).");
-				case 8 -> System.out.println("Guardar alumnos en un XML o JSON: (Funcionalidad no implementada aún).");
-				case 9 -> System.out.println("Leer XML o JSON de alumnos: (Funcionalidad no implementada aún).");
-				case 10 -> System.out.println("Ha elegido SALIR. Hasta pronto.");
-				default -> System.out.println("Opción incorrecta. Por favor, elija una opción entre 1 y 10.");
+				case 3 -> {
+					System.out.println("Ha elegido: Guardar alumnos en un fichero binario.");
+					gestor.guardarAlumnosEnFicheroBinario(conexionBD.obtenerConexion()); // Llamada al método de la
+																							// clase GestorAlumnosBD
+				}
+
+				case 4 ->
+					System.out.println("Guardar alumnos en un fichero de texto: (Funcionalidad no implementada aún).");
+				case 5 -> System.out.println(
+						"Leer alumnos de un fichero binario y guardarlos en una BD: (Funcionalidad no implementada aún).");
+				case 6 -> System.out.println(
+						"Leer alumnos de un fichero de texto y  guardarlos en una BD: (Funcionalidad no implementada aún).");
+				case 7 -> System.out.println(
+						"Modificar el nombre de un alumno guardado en la base de datos a partir de su Primary Key (PK): (Funcionalidad no implementada aún).");
+				case 8 ->
+					System.out.println("Eliminar un alumno a partir de su (PK): (Funcionalidad no implementada aún).");
+				case 9 -> System.out.println(
+						"Eliminar los alumnos cuyos apellidos contengan la palabra indicada por el usuario.: (Funcionalidad no implementada aún).");
+				case 10 -> System.out
+						.println("Guardar todos los alumnos en un fichero XML: (Funcionalidad no implementada aún).");
+				case 11 -> System.out.println(
+						"Guardar todos los alumnos en un fichero JSON con GSON: (Funcionalidad no implementada aún).");
+
+				case 12 -> System.out.println(
+						"Leer un fichero XML de alumnos y guardarlos en la BD: (Funcionalidad no implementada aún).");
+				case 13 -> System.out.println(
+						"Leer fichero JSON de alumnos y guardarlos en la BD: (Funcionalidad no implementada aún).");
+				case 14 -> System.out.println("Ha elegido SALIR. Hasta pronto.");
+				default -> System.out.println("Opción incorrecta. Por favor, elija una opción entre 1 y 14.");
 				}
 			} catch (Exception e) {
 				System.out.println("Error: Entrada no válida. Inténtelo de nuevo.");
@@ -78,15 +89,20 @@ public class Menu {
 						=============================================================================================================
 						 1. Insertar un nuevo alumno.
 						 2. Mostrar todos los alumnos (en consola).
-						 3. Guardar todos los alumnos en un fichero (tú eliges el formato del fichero, pero no puede ser XML ni JSON).
-						 4. Leer alumnos de un fichero (con el formato anterior), y guardarlos en una BD.
-						 5. Modificar el nombre de un alumno guardado en la base de datos a partir de su Primary Key (PK).
-						 6. Eliminar un alumno a partir de su (PK).
-						 7. Eliminar los alumnos que su apellido contengan la palabra dada por el usuario.
-						 8. Guardar todos los alumnos en un fichero XML o JSON.
-						 9. Leer un fichero XML o JSON de alumnos (con en formato anterior) y guardarlos en la BD.
-						10. Salir.
+						 3. Guardar todos los alumnos en un fichero binario.
+						 4. Guardar todos los alumnos en un fichero de texto.
+						 5. Leer alumnos de un fichero binario y guardarlos en una BD.
+						 6. Leer alumnos de un fichero de texto y guardarlos en una BD.
+						 7. Modificar el nombre de un alumno guardado en la base de datos a partir de su Primary Key (PK).
+						 8. Eliminar un alumno a partir de su (PK).
+						 9. Eliminar los alumnos cuyos apellidos contengan la palabra indicada por el usuario.
+						 10. Guardar todos los alumnos en un fichero XML.
+						 11. Guardar todos los alumnos en un fichero JSON.
+						 12. Leer un fichero XML de alumnos y guardarlos en la BD.
+						 13. Leer un fichero JSON de alumnos y guardarlos en la BD.
+						 14. Salir.
 						=============================================================================================================
 						""");
 	}
+
 }
