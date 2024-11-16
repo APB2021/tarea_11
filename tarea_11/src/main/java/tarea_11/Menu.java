@@ -49,8 +49,10 @@ public class Menu {
 					System.out.println("Ha elegido: Guardar alumnos en un fichero de texto.");
 					gestor.guardarAlumnosEnFicheroTexto(conexionBD.obtenerConexion());
 				}
-				case 5 -> System.out.println(
-						"Leer alumnos de un fichero binario y guardarlos en una BD: (Funcionalidad no implementada aún).");
+				case 5 -> {
+					System.out.println("Ha elegido: Leer alumnos de un fichero binario y guardarlos en una BD.");
+					gestor.leerAlumnosDeFicheroBinarioYGuardarlosEnBD(conexionBD.obtenerConexion());
+				}
 				case 6 -> System.out.println(
 						"Leer alumnos de un fichero de texto y  guardarlos en una BD: (Funcionalidad no implementada aún).");
 				case 7 -> System.out.println(

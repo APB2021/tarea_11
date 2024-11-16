@@ -1,9 +1,12 @@
 package tarea_11;
 
 import java.io.BufferedWriter;
+import java.io.EOFException;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.sql.Connection;
 import java.sql.Date;
@@ -279,4 +282,62 @@ public class GestorAlumnosBD {
 		}
 	}
 
+	public void leerAlumnosDeFicheroBinarioYGuardarlosEnBD(Connection conexionBD) {
+	    // Exclusión del campo nia: La instrucción SQL omite nia, ya que los valores para este campo los generará automáticamente la base de datos.
+	    String sql = "INSERT INTO alumno (nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo) VALUES (?, ?, ?, ?, ?, ?, ?)";
+	    String archivoPorDefecto = "src\\main\\java/tarea_11/alumnos.dat";
+
+	    try {
+	        // Preguntar al usuario si desea usar un archivo diferente
+	        System.out.print("El archivo predeterminado es 'alumnos.dat'. ¿Quieres especificar otro archivo para leer? (si/no): ");
+	        String respuesta = sc.nextLine().trim().toLowerCase();
+	        
+	        // Únicamente se aceptan las respuestas si o no.
+	        while (!respuesta.equalsIgnoreCase("si") && !respuesta.equalsIgnoreCase("no")) {
+	            System.out.print("Por favor, responde 'si' o 'no': ");
+	            respuesta = sc.nextLine().trim().toLowerCase();
+	        }
+
+	        String nombreArchivo = archivoPorDefecto;
+	        if ("si".equals(respuesta)) {
+	            System.out.print("Introduce el nombre del archivo binario personalizado: ");
+	            nombreArchivo =  "src\\main\\java/tarea_11/" + sc.nextLine().trim();
+	        }
+
+	        // Leer archivo binario
+	        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(nombreArchivo));
+	             PreparedStatement sentencia = conexionBD.prepareStatement(sql)) {
+
+	            while (true) {
+	                try {
+	                    // Leer objeto Alumno del archivo binario
+	                    Alumno alumno = (Alumno) ois.readObject();
+
+	                    // Configurar los parámetros para la inserción (sin nia)
+	                    sentencia.setString(1, alumno.getNombre());
+	                    sentencia.setString(2, alumno.getApellidos());
+	                    sentencia.setString(3, String.valueOf(alumno.getGenero()));
+	                    sentencia.setDate(4, new java.sql.Date(alumno.getFechaNacimiento().getTime())); // Usamos java.sql.Date para la base de datos
+	                    sentencia.setString(5, alumno.getCiclo());
+	                    sentencia.setString(6, alumno.getCurso());
+	                    sentencia.setString(7, alumno.getGrupo());
+
+	                    // Ejecutar la inserción
+	                    sentencia.executeUpdate();
+	                } catch (EOFException e) {
+	                    // Fin del archivo binario
+	                    break;
+	                } catch (ClassNotFoundException e) {
+	                    System.err.println("Error al leer el archivo binario: Clase no encontrada. " + e.getMessage());
+	                    break;  // Para detener la lectura y evitar un bucle infinito en caso de error.
+	                }
+	            }
+	            System.out.println("Alumnos insertados en la base de datos desde el archivo binario.");
+	        } catch (IOException e) {
+	            System.err.println("Error al leer el archivo binario: " + e.getMessage());
+	        }
+	    } catch (SQLException e) {
+	        System.err.println("Error al insertar los alumnos en la base de datos: " + e.getMessage());
+	    }
+	}
 }
