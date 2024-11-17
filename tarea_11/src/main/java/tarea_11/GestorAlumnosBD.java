@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -293,16 +294,8 @@ public class GestorAlumnosBD {
 			try (BufferedWriter writer = new BufferedWriter(new FileWriter(nombreArchivo))) {
 				// Iteramos por los resultados y escribimos los datos en el archivo
 				while (resultado.next()) {
-					/*
-					 * String alumno = String.format(
-					 * "NIA: %d, Nombre: %s, Apellidos: %s, Género: %c, Fecha de Nacimiento: %s, Ciclo: %s, Curso: %s, Grupo: %s"
-					 * , resultado.getInt("nia"), resultado.getString("nombre"),
-					 * resultado.getString("apellidos"), resultado.getString("genero").charAt(0),
-					 * resultado.getDate("fechaNacimiento"), resultado.getString("ciclo"),
-					 * resultado.getString("curso"), resultado.getString("grupo"));
-					 */
 
-					String alumno = String.format("%d, %s, %s, %c, %s, %s, %s, %s", resultado.getInt("nia"),
+					String alumno = String.format("%d,%s,%s,%c,%s,%s,%s,%s", resultado.getInt("nia"),
 							resultado.getString("nombre"), resultado.getString("apellidos"),
 							resultado.getString("genero").charAt(0), resultado.getDate("fechaNacimiento"),
 							resultado.getString("ciclo"), resultado.getString("curso"), resultado.getString("grupo"));
@@ -388,7 +381,7 @@ public class GestorAlumnosBD {
 		// Exclusión del campo nia: La instrucción SQL omite nia, ya que los valores
 		// para este campo los generará automáticamente la base de datos.
 		String sql = "INSERT INTO alumno (nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo) VALUES (?, ?, ?, ?, ?, ?, ?)";
-		String archivoPorDefecto = "src\\main\\java/tarea_11/alumnos.txt";
+		String archivoDeTextoPorDefecto = "src\\main\\java/tarea_11/alumnos.txt";
 
 		try {
 			// Preguntar al usuario si desea usar un archivo diferente
@@ -396,13 +389,13 @@ public class GestorAlumnosBD {
 					"El archivo predeterminado es 'alumnos.txt'. ¿Quieres especificar otro archivo para leer? (si/no): ");
 			String respuesta = sc.nextLine().trim().toLowerCase();
 
-			// Únicamente se aceptan las respuestas si o no.
-			while (!respuesta.equalsIgnoreCase("si") && !respuesta.equalsIgnoreCase("no")) {
+			// Únicamente se aceptan las respuestas "si" o "no".
+			while (!respuesta.equals("si") && !respuesta.equals("no")) {
 				System.out.print("Por favor, responde 'si' o 'no': ");
 				respuesta = sc.nextLine().trim().toLowerCase();
 			}
 
-			String nombreArchivo = archivoPorDefecto;
+			String nombreArchivo = archivoDeTextoPorDefecto;
 			if ("si".equals(respuesta)) {
 				System.out.print("Introduce el nombre del archivo de texto personalizado: ");
 				nombreArchivo = "src\\main\\java/tarea_11/" + sc.nextLine().trim();
@@ -415,23 +408,40 @@ public class GestorAlumnosBD {
 				String linea;
 				while ((linea = br.readLine()) != null) {
 					// Suponiendo que el formato del archivo de texto es:
-					// nombre|apellidos|genero|fechaNacimiento|ciclo|curso|grupo
-					// String[] datos = linea.split("\\|"); // Usamos el carácter '|' como
-					// delimitador
-					String[] datos = linea.split("\\, "); // Usamos ',' como delimitador
+					// índice,nombre,apellidos,genero,fechaNacimiento,ciclo,curso,grupo
+					String[] datos = linea.split(",");
 
-					if (datos.length == 7) { // Asegurarse de que la línea tiene los 7 campos esperados
-						// Configurar los parámetros para la inserción (sin nia)
-						sentencia.setString(1, datos[0]); // nombre
-						sentencia.setString(2, datos[1]); // apellidos
-						sentencia.setString(3, datos[2]); // genero
-						sentencia.setDate(4, java.sql.Date.valueOf(datos[3])); // fechaNacimiento
-						sentencia.setString(5, datos[4]); // ciclo
-						sentencia.setString(6, datos[5]); // curso
-						sentencia.setString(7, datos[6]); // grupo
+					if (datos.length == 8) { // 8 campos incluyendo el índice inicial
+						// Ignorar el índice inicial y procesar los siguientes 7 campos
+						for (int i = 1; i < datos.length; i++) {
+							datos[i] = datos[i].trim();
+						}
 
-						// Ejecutar la inserción
+						// Manejar formato de fecha
+						String fechaNacimientoStr = datos[4]; // Cambia al índice 4 por la fecha
+						Date fechaNacimiento = null;
+						try {
+							SimpleDateFormat formatoFecha = new SimpleDateFormat("yyyy-MM-dd");
+							java.util.Date parsedDate = formatoFecha.parse(fechaNacimientoStr);
+							fechaNacimiento = new java.sql.Date(parsedDate.getTime());
+						} catch (ParseException e) {
+							System.err.println("Formato de fecha inválido en la línea: " + linea);
+							continue; // Saltar esta línea si la fecha es inválida
+						}
+
+						// Configurar parámetros e insertar
+						sentencia.setString(1, datos[1]); // nombre
+						sentencia.setString(2, datos[2]); // apellidos
+						sentencia.setString(3, datos[3]); // genero
+						sentencia.setDate(4, fechaNacimiento); // fechaNacimiento
+						sentencia.setString(5, datos[5]); // ciclo
+						sentencia.setString(6, datos[6]); // curso
+						sentencia.setString(7, datos[7]); // grupo
+
 						sentencia.executeUpdate();
+						System.out.println("Alumno insertado: " + Arrays.toString(datos));
+					} else {
+						System.err.println("Línea no válida: " + linea);
 					}
 				}
 				System.out.println("Alumnos insertados en la base de datos desde el archivo de texto.");
@@ -928,7 +938,7 @@ public class GestorAlumnosBD {
 		// Ahora procesamos el archivo JSON seleccionado
 		try {
 			// Crear el objeto GSON
-			//Gson gson = new Gson();
+			// Gson gson = new Gson();
 
 			// Leer el fichero JSON
 			FileReader reader = new FileReader(nombreArchivo);
@@ -939,7 +949,7 @@ public class GestorAlumnosBD {
 				JsonObject jsonAlumno = jsonArray.get(i).getAsJsonObject();
 
 				// Obtener los valores de cada alumno
-				//int nia = jsonAlumno.get("nia").getAsInt();
+				// int nia = jsonAlumno.get("nia").getAsInt();
 				String nombre = jsonAlumno.get("nombre").getAsString();
 				String apellidos = jsonAlumno.get("apellidos").getAsString();
 				char genero = jsonAlumno.get("genero").getAsString().charAt(0);
