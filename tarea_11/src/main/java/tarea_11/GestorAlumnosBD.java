@@ -3,6 +3,7 @@ package tarea_11;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.EOFException;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -15,10 +16,23 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Scanner;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 public class GestorAlumnosBD {
 
@@ -266,11 +280,20 @@ public class GestorAlumnosBD {
 			try (BufferedWriter writer = new BufferedWriter(new FileWriter(nombreArchivo))) {
 				// Iteramos por los resultados y escribimos los datos en el archivo
 				while (resultado.next()) {
-					String alumno = String.format(
-							"NIA: %d, Nombre: %s, Apellidos: %s, Género: %c, Fecha de Nacimiento: %s, Ciclo: %s, Curso: %s, Grupo: %s",
-							resultado.getInt("nia"), resultado.getString("nombre"), resultado.getString("apellidos"),
+					/*
+					 * String alumno = String.format(
+					 * "NIA: %d, Nombre: %s, Apellidos: %s, Género: %c, Fecha de Nacimiento: %s, Ciclo: %s, Curso: %s, Grupo: %s"
+					 * , resultado.getInt("nia"), resultado.getString("nombre"),
+					 * resultado.getString("apellidos"), resultado.getString("genero").charAt(0),
+					 * resultado.getDate("fechaNacimiento"), resultado.getString("ciclo"),
+					 * resultado.getString("curso"), resultado.getString("grupo"));
+					 */
+
+					String alumno = String.format("%d, %s, %s, %c, %s, %s, %s, %s", resultado.getInt("nia"),
+							resultado.getString("nombre"), resultado.getString("apellidos"),
 							resultado.getString("genero").charAt(0), resultado.getDate("fechaNacimiento"),
 							resultado.getString("ciclo"), resultado.getString("curso"), resultado.getString("grupo"));
+
 					writer.write(alumno);
 					writer.newLine(); // Salto de línea para separar alumnos
 				}
@@ -380,7 +403,9 @@ public class GestorAlumnosBD {
 				while ((linea = br.readLine()) != null) {
 					// Suponiendo que el formato del archivo de texto es:
 					// nombre|apellidos|genero|fechaNacimiento|ciclo|curso|grupo
-					String[] datos = linea.split("\\|"); // Usamos el carácter '|' como delimitador
+					// String[] datos = linea.split("\\|"); // Usamos el carácter '|' como
+					// delimitador
+					String[] datos = linea.split("\\, "); // Usamos ',' como delimitador
 
 					if (datos.length == 7) { // Asegurarse de que la línea tiene los 7 campos esperados
 						// Configurar los parámetros para la inserción (sin nia)
@@ -402,6 +427,230 @@ public class GestorAlumnosBD {
 			}
 		} catch (SQLException e) {
 			System.err.println("Error al insertar los alumnos en la base de datos: " + e.getMessage());
+		}
+	}
+
+	public void modificarNombreAlumnoPorNIA(Connection conexionBD) {
+		String sqlVerificar = "SELECT COUNT(*) FROM alumno WHERE nia = ?";
+		String sqlActualizar = "UPDATE alumno SET nombre = ? WHERE nia = ?";
+
+		try {
+			int nia = -1;
+			boolean niaValido = false;
+
+			// Bucle para solicitar un NIA válido
+			while (!niaValido) {
+				System.out.print("Introduce el NIA del alumno cuyo nombre deseas modificar: ");
+				try {
+					nia = Integer.parseInt(sc.nextLine().trim()); // Asumimos que el NIA es un número entero
+
+					// Verificar si el NIA existe en la base de datos
+					try (PreparedStatement verificarSentencia = conexionBD.prepareStatement(sqlVerificar)) {
+						verificarSentencia.setInt(1, nia);
+						try (ResultSet resultado = verificarSentencia.executeQuery()) {
+							if (resultado.next() && resultado.getInt(1) > 0) {
+								niaValido = true; // El NIA es válido
+							} else {
+								System.out.println(
+										"No se encontró ningún alumno con el NIA proporcionado. Inténtalo de nuevo.");
+							}
+						}
+					}
+				} catch (NumberFormatException e) {
+					System.out.println("El NIA debe ser un número válido. Inténtalo de nuevo.");
+				}
+			}
+
+			// Solicitar el nuevo nombre si el NIA es válido
+			System.out.print("Introduce el nuevo nombre del alumno: ");
+			String nuevoNombre = sc.nextLine().trim().toUpperCase();
+
+			// Actualizar el nombre en la base de datos
+			try (PreparedStatement actualizarSentencia = conexionBD.prepareStatement(sqlActualizar)) {
+				actualizarSentencia.setString(1, nuevoNombre);
+				actualizarSentencia.setInt(2, nia);
+
+				int filasAfectadas = actualizarSentencia.executeUpdate();
+				if (filasAfectadas > 0) {
+					System.out.println("El nombre del alumno con NIA " + nia + " ha sido actualizado correctamente.");
+				} else {
+					System.out.println("No se pudo actualizar el nombre del alumno.");
+				}
+			}
+
+		} catch (SQLException e) {
+			System.err.println("Error al interactuar con la base de datos: " + e.getMessage());
+		}
+	}
+
+	public void eliminarAlumnoPorNIA(Connection conexionBD) {
+		String sqlEliminar = "DELETE FROM alumno WHERE nia = ?";
+		String sqlExistencia = "SELECT nia FROM alumno WHERE nia = ?";
+
+		int nia = -1;
+		boolean alumnoExiste = false;
+
+		// Bucle para obtener un NIA válido
+		while (!alumnoExiste) {
+			try {
+				// Solicitar al usuario el NIA
+				System.out.print("Introduce el NIA del alumno que deseas eliminar: ");
+				nia = Integer.parseInt(sc.nextLine().trim()); // Verificamos que sea un número válido.
+
+				// Verificar si el alumno con este NIA existe en la base de datos
+				try (PreparedStatement consultaExistencia = conexionBD.prepareStatement(sqlExistencia)) {
+					consultaExistencia.setInt(1, nia);
+					try (ResultSet rs = consultaExistencia.executeQuery()) {
+						if (rs.next()) { // Si encontramos un NIA que coincide
+							alumnoExiste = true; // El alumno existe, podemos continuar
+						} else {
+							// NIA no encontrado en la base de datos
+							System.out.println("No se encontró ningún alumno con ese NIA. Inténtalo de nuevo.");
+						}
+					}
+				}
+			} catch (NumberFormatException e) {
+				System.out.println("El NIA debe ser un número válido. Inténtalo de nuevo.");
+			} catch (SQLException e) {
+				System.out.println("Error al comprobar la existencia del NIA en la base de datos: " + e.getMessage());
+			}
+		}
+
+		// Si el NIA existe, proceder a confirmar la eliminación
+		try {
+			System.out.print("¿Estás seguro de que deseas eliminar al alumno con NIA " + nia + "? (si/no): ");
+			String confirmacion = sc.nextLine().trim().toLowerCase();
+			if ("si".equals(confirmacion)) {
+				// Eliminar el alumno de la base de datos
+				try (PreparedStatement sentenciaEliminar = conexionBD.prepareStatement(sqlEliminar)) {
+					sentenciaEliminar.setInt(1, nia);
+					int filasAfectadas = sentenciaEliminar.executeUpdate();
+					if (filasAfectadas > 0) {
+						System.out.println("El alumno con NIA " + nia + " ha sido eliminado correctamente.");
+					} else {
+						System.out.println("No se pudo eliminar el alumno. Por favor, verifica los datos.");
+					}
+				}
+			} else {
+				System.out.println("Operación cancelada.");
+			}
+		} catch (SQLException e) {
+			System.err.println("Error al procesar la solicitud de eliminación: " + e.getMessage());
+		}
+	}
+
+	public void eliminarAlumnosPorApellido(Connection conexionBD) {
+		String sql = "DELETE FROM alumno WHERE apellidos LIKE ?";
+
+		try {
+			// Solicitar la palabra clave para buscar en los apellidos
+			System.out.print("Introduce la palabra que quieres buscar en los apellidos de los alumnos: ");
+			String palabraBuscada = sc.nextLine().trim().toUpperCase();
+
+			// Verificar que la palabra no esté vacía
+			if (palabraBuscada.isEmpty()) {
+				System.out.println("La palabra clave no puede estar vacía.");
+				return;
+			}
+
+			// Preparar la consulta SQL
+			try (PreparedStatement sentencia = conexionBD.prepareStatement(sql)) {
+				sentencia.setString(1, "%" + palabraBuscada + "%"); // "%" es un comodín que permite buscar la palabra
+																	// en cualquier parte del apellido
+
+				// Ejecutar la eliminación
+				int filasAfectadas = sentencia.executeUpdate();
+				if (filasAfectadas > 0) {
+					System.out.println(filasAfectadas + " alumno(s) eliminado(s) de la base de datos.");
+				} else {
+					System.out.println("No se encontraron alumnos con esa palabra en los apellidos.");
+				}
+			}
+		} catch (SQLException e) {
+			System.err.println("Error al eliminar los alumnos en la base de datos: " + e.getMessage());
+		}
+	}
+
+	public void guardarAlumnosEnFicheroXML(Connection conexionBD) {
+		// Utilizar los nombres correctos de campos en lugar de SELECT *
+		String sql = "SELECT nia, nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo FROM alumno";
+
+		// Crear el documento XML y la estructura de salida
+		Document documento = null;
+		try {
+			documento = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+		} catch (ParserConfigurationException e) {
+			System.err.println("Error al crear el documento XML: " + e.getMessage());
+			return; // Si ocurre un error al crear el documento, terminamos la ejecución
+		}
+		Element raiz = documento.createElement("alumnos");
+		documento.appendChild(raiz);
+
+		try (Statement sentencia = conexionBD.createStatement(); ResultSet resultado = sentencia.executeQuery(sql)) {
+
+			// Recorrer el ResultSet y crear los elementos XML correspondientes
+			while (resultado.next()) {
+				Element alumnoElemento = documento.createElement("alumno");
+
+				// Lista de los nombres de las columnas en la tabla alumno
+				String[] campos = { "nia", "nombre", "apellidos", "genero", "fechaNacimiento", "ciclo", "curso",
+						"grupo" };
+
+				// Recorrer los campos y añadir cada uno al XML
+				for (String campo : campos) {
+					// Crear el elemento y asignar el valor del campo
+					Element campoElemento = documento.createElement(campo);
+					campoElemento.appendChild(documento.createTextNode(resultado.getString(campo)));
+					alumnoElemento.appendChild(campoElemento);
+				}
+
+				// Añadir el alumno al nodo raíz del XML
+				raiz.appendChild(alumnoElemento);
+			}
+
+			// Preguntar al usuario si quiere usar el nombre de archivo por defecto o
+			// personalizado
+			System.out.print("¿Quieres usar el nombre de archivo por defecto (alumnos.xml)? (S/N): ");
+			String respuesta = sc.nextLine().trim().toUpperCase();
+
+			String nombreArchivo = "alumnos.xml"; // Nombre por defecto
+
+			if (respuesta.equals("N")) {
+				// Si el usuario elige nombre personalizado, solicitamos el nombre
+				System.out.print("Introduce el nombre del archivo (sin la extensión .xml): ");
+				nombreArchivo = sc.nextLine().trim();
+
+				// Verificar si el nombre contiene la extensión .xml, si no, añadirla
+				if (!nombreArchivo.endsWith(".xml")) {
+					nombreArchivo += ".xml";
+				}
+			}
+
+			// Comprobar si el archivo ya existe y preguntar al usuario si desea
+			// sobrescribirlo
+			File archivo = new File("src\\main\\java\\tarea_11\\" + nombreArchivo);
+			if (archivo.exists()) {
+				System.out.print("El archivo " + nombreArchivo + " ya existe. ¿Quieres sobrescribirlo? (S/N): ");
+				String confirmar = sc.nextLine().trim().toUpperCase();
+				if (confirmar.equals("N")) {
+					System.out.println("Operación cancelada. El archivo no fue sobrescrito.");
+					return; // Salir del método si no queremos sobrescribir el archivo
+				}
+			}
+
+			// Guardar el documento XML en un archivo
+			try {
+				Transformer transformer = TransformerFactory.newInstance().newTransformer();
+				transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+				transformer.transform(new DOMSource(documento), new StreamResult(archivo));
+			} catch (TransformerException e) {
+				System.err.println("Error al guardar el archivo XML: " + e.getMessage());
+			}
+
+			System.out.println("Los alumnos han sido guardados en el archivo XML: " + nombreArchivo);
+
+		} catch (SQLException e) {
+			System.err.println("Error al guardar los alumnos en el archivo XML: " + e.getMessage());
 		}
 	}
 

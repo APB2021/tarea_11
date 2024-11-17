@@ -1,5 +1,6 @@
 package tarea_11;
 
+import java.sql.Connection;
 import java.util.Scanner;
 
 public class Menu {
@@ -57,14 +58,26 @@ public class Menu {
 					System.out.println("Ha elegido: Leer alumnos de un fichero de texto y guardarlos en una BD.");
 					gestor.leerAlumnosDeFicheroTextoYGuardarlosEnBD(conexionBD.obtenerConexion());
 				}
-				case 7 -> System.out.println(
-						"Modificar el nombre de un alumno guardado en la base de datos a partir de su Primary Key (PK): (Funcionalidad no implementada aún).");
-				case 8 ->
-					System.out.println("Eliminar un alumno a partir de su (PK): (Funcionalidad no implementada aún).");
-				case 9 -> System.out.println(
-						"Eliminar los alumnos cuyos apellidos contengan la palabra indicada por el usuario.: (Funcionalidad no implementada aún).");
-				case 10 -> System.out
-						.println("Guardar todos los alumnos en un fichero XML: (Funcionalidad no implementada aún).");
+				case 7 -> {
+					System.out.println(
+							"Ha elegido: Modificar el nombre de un alumno guardado en la base de datos a partir de su Primary Key (PK)");
+					gestor.modificarNombreAlumnoPorNIA(conexionBD.obtenerConexion());
+				}
+
+				case 8 -> {
+					System.out.println("Ha elegido: Eliminar un alumno a partir de su (PK)");
+					gestor.eliminarAlumnoPorNIA(conexionBD.obtenerConexion());
+				}
+				case 9 -> {
+					System.out.println(
+							"Ha elegido: Eliminar los alumnos cuyos apellidos contengan la palabra indicada por el usuario.");
+					gestor.eliminarAlumnosPorApellido(conexionBD.obtenerConexion());
+				}
+				case 10 -> {
+					System.out.println("Ha elegido: Guardar todos los alumnos en un fichero XML.");
+					gestor.guardarAlumnosEnFicheroXML(conexionBD.obtenerConexion());
+				}
+
 				case 11 -> System.out.println(
 						"Guardar todos los alumnos en un fichero JSON con GSON: (Funcionalidad no implementada aún).");
 
