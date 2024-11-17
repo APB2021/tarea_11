@@ -1,8 +1,5 @@
 package tarea_11;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.EOFException;
@@ -20,6 +17,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -42,6 +40,12 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class GestorAlumnosBD {
 
@@ -824,7 +828,7 @@ public class GestorAlumnosBD {
 					// Obtener los valores de cada elemento de alumno
 					// No necesitaremos el nia porque en la base de datos es auto_increment
 					// int nia = Integer.parseInt(getTagValue("nia", elementoAlumno));
-					
+
 					String nombre = getTagValue("nombre", elementoAlumno);
 					String apellidos = getTagValue("apellidos", elementoAlumno);
 					char genero = getTagValue("genero", elementoAlumno).charAt(0);
@@ -868,4 +872,114 @@ public class GestorAlumnosBD {
 		return "";
 	}
 
+	public void leerAlumnosDeFicheroJSONYGuardarlosEnBD(Connection conexionBD) {
+		// Directorio de trabajo por defecto
+		String directorio = "src\\main\\java\\tarea_11\\";
+
+		// Listar los archivos JSON disponibles en el directorio
+		File carpeta = new File(directorio);
+		File[] ficherosJSONenCarpeta = carpeta.listFiles((dir, name) -> name.endsWith(".json"));
+
+		// Si no hay archivos JSON, mostrar un mensaje
+		if (ficherosJSONenCarpeta == null || ficherosJSONenCarpeta.length == 0) {
+			System.out.println("No se encontraron archivos JSON en el directorio.");
+			return;
+		}
+
+		// Mostrar los archivos JSON disponibles
+		System.out.println("Archivos JSON disponibles:");
+		for (int i = 0; i < ficherosJSONenCarpeta.length; i++) {
+			System.out.println((i + 1) + ". " + ficherosJSONenCarpeta[i].getName());
+		}
+
+		// Preguntar al usuario si desea usar un archivo por defecto o uno de los
+		// disponibles
+		System.out.print("¿Deseas usar el archivo JSON por defecto (alumnos.json)? (S/N): ");
+		String respuesta = sc.nextLine().trim().toUpperCase();
+
+		// Inicializar nombreArchivo con un valor por defecto para evitar el error de no
+		// inicialización
+		String nombreArchivo = "";
+
+		if (respuesta.equals("S")) {
+			// Si elige usar el archivo por defecto, establecemos el nombre por defecto
+			nombreArchivo = directorio + "alumnos.json";
+		} else {
+			// Si elige uno de los archivos disponibles
+			System.out.print("Introduce el nombre del archivo JSON que deseas utilizar (sin la extensión .json): ");
+			String nombreFichero = sc.nextLine().trim();
+
+			// Buscar el archivo con el nombre ingresado
+			boolean encontrado = false;
+			for (File fichero : ficherosJSONenCarpeta) {
+				if (fichero.getName().equalsIgnoreCase(nombreFichero + ".json")) {
+					nombreArchivo = fichero.getAbsolutePath();
+					encontrado = true;
+					break;
+				}
+			}
+
+			if (!encontrado) {
+				System.out.println("El archivo no se encontró en la lista.");
+				return;
+			}
+		}
+
+		// Ahora procesamos el archivo JSON seleccionado
+		try {
+			// Crear el objeto GSON
+			//Gson gson = new Gson();
+
+			// Leer el fichero JSON
+			FileReader reader = new FileReader(nombreArchivo);
+			JsonArray jsonArray = JsonParser.parseReader(reader).getAsJsonArray();
+
+			// Recorrer la lista de alumnos en el JSON
+			for (int i = 0; i < jsonArray.size(); i++) {
+				JsonObject jsonAlumno = jsonArray.get(i).getAsJsonObject();
+
+				// Obtener los valores de cada alumno
+				//int nia = jsonAlumno.get("nia").getAsInt();
+				String nombre = jsonAlumno.get("nombre").getAsString();
+				String apellidos = jsonAlumno.get("apellidos").getAsString();
+				char genero = jsonAlumno.get("genero").getAsString().charAt(0);
+
+				// Manejo de la fecha de nacimiento
+				String fechaNacimientoStr = jsonAlumno.get("fechaNacimiento").getAsString();
+				Date fechaNacimiento = null;
+				try {
+					SimpleDateFormat formatoFecha = new SimpleDateFormat("dd-MM-yyyy");
+					fechaNacimiento = new Date(formatoFecha.parse(fechaNacimientoStr).getTime());
+				} catch (ParseException e) {
+					System.out.println("Error al parsear la fecha: " + fechaNacimientoStr);
+					continue; // Saltar este alumno si la fecha es inválida
+				}
+
+				String ciclo = jsonAlumno.get("ciclo").getAsString();
+				String curso = jsonAlumno.get("curso").getAsString();
+				String grupo = jsonAlumno.get("grupo").getAsString();
+
+				// Preparar la sentencia SQL para insertar el alumno en la BD
+				String sql = "INSERT INTO alumno (nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo) VALUES (?, ?, ?, ?, ?, ?, ?)";
+				try (PreparedStatement sentencia = conexionBD.prepareStatement(sql)) {
+					sentencia.setString(1, nombre);
+					sentencia.setString(2, apellidos);
+					sentencia.setString(3, String.valueOf(genero));
+					sentencia.setDate(4, fechaNacimiento);
+					sentencia.setString(5, ciclo);
+					sentencia.setString(6, curso);
+					sentencia.setString(7, grupo);
+					sentencia.executeUpdate();
+				} catch (SQLException e) {
+					System.err.println("Error al insertar el alumno en la base de datos: " + e.getMessage());
+				}
+			}
+
+			System.out.println("Todos los alumnos han sido guardados en la base de datos.");
+		} catch (IOException e) {
+			System.err.println("Error al leer el archivo JSON: " + e.getMessage());
+		} catch (Exception e) {
+			System.err.println("Error al procesar el archivo JSON: " + e.getMessage());
+		}
+	}
 }

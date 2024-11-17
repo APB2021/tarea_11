@@ -88,8 +88,12 @@ public class Menu {
 					;
 				}
 
-				case 13 -> System.out.println(
-						"Leer fichero JSON de alumnos y guardarlos en la BD: (Funcionalidad no implementada aún).");
+				case 13 -> {
+					System.out.println("Ha elegido: Leer fichero JSON (GSON) de alumnos y guardarlos en la BD");
+					gestor.leerAlumnosDeFicheroJSONYGuardarlosEnBD(conexionBD.obtenerConexion());
+					;
+				}
+
 				case 14 -> System.out.println("Ha elegido SALIR. Hasta pronto.");
 				default -> System.out.println("Opción incorrecta. Por favor, elija una opción entre 1 y 14.");
 				}
