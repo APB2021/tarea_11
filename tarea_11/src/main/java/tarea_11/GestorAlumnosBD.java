@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
@@ -39,6 +40,8 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 public class GestorAlumnosBD {
 
@@ -737,4 +740,132 @@ public class GestorAlumnosBD {
 			System.err.println("Error al obtener los alumnos de la base de datos: " + e.getMessage());
 		}
 	}
+
+	public void leerAlumnosDeFicheroXMLYGuardarlosEnBD(Connection conexionBD) {
+
+		// Directorio de trabajo por defecto
+		String directorio = "src\\main\\java\\tarea_11\\";
+
+		// Listar los archivos XML disponibles en el directorio
+		File carpeta = new File(directorio);
+		File[] ficherosXMLenCarpeta = carpeta.listFiles((dir, name) -> name.endsWith(".xml"));
+
+		// Si no hay archivos XML, mostrar un mensaje
+		if (ficherosXMLenCarpeta == null || ficherosXMLenCarpeta.length == 0) {
+			System.out.println("No se encontraron archivos XML en el directorio.");
+			return;
+		}
+
+		// Mostrar los archivos XML disponibles
+		System.out.println("Archivos XML disponibles:");
+		for (int i = 0; i < ficherosXMLenCarpeta.length; i++) {
+			System.out.println((i + 1) + ". " + ficherosXMLenCarpeta[i].getName());
+		}
+
+		// Preguntar al usuario si desea usar un archivo por defecto o uno de los
+		// disponibles
+		System.out.print("¿Deseas usar el archivo XML por defecto (alumnos.xml)? (S/N): ");
+		String respuesta = sc.nextLine().trim().toUpperCase();
+
+		String nombreArchivo = null; // Inicializar a null
+
+		if (respuesta.equals("S")) {
+			// Si elige usar el archivo por defecto, establecemos el nombre por defecto
+			nombreArchivo = directorio + "alumnos.xml";
+		} else {
+			// Si elige uno de los archivos disponibles
+			System.out.print("Introduce el nombre del archivo XML que deseas utilizar (sin la extensión .xml): ");
+			String nombreFichero = sc.nextLine().trim();
+
+			// Buscar el archivo con el nombre ingresado
+			boolean encontrado = false;
+			for (File fichero : ficherosXMLenCarpeta) {
+				if (fichero.getName().equalsIgnoreCase(nombreFichero + ".xml")) {
+					nombreArchivo = fichero.getAbsolutePath();
+					encontrado = true;
+					break;
+				}
+			}
+
+			if (!encontrado) {
+				System.out.println("El archivo no se encontró en la lista.");
+				return;
+			}
+		}
+
+		// Verificar si nombreArchivo es null antes de continuar
+		if (nombreArchivo == null) {
+			System.out.println("No se ha seleccionado un archivo XML válido.");
+			return;
+		}
+
+		// Ahora procesamos el archivo XML seleccionado
+		try {
+			// Crear el parser de XML
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder builder = factory.newDocumentBuilder();
+
+			// Leer el fichero XML
+			File xmlFile = new File(nombreArchivo);
+			Document document = builder.parse(xmlFile);
+
+			// Normalizar el XML
+			document.getDocumentElement().normalize();
+
+			// Obtener todos los elementos "alumno"
+			NodeList nodeList = document.getElementsByTagName("alumno");
+
+			// Recorrer la lista de alumnos
+			for (int i = 0; i < nodeList.getLength(); i++) {
+				Node node = nodeList.item(i);
+				if (node.getNodeType() == Node.ELEMENT_NODE) {
+					Element elementoAlumno = (Element) node;
+
+					// Obtener los valores de cada elemento de alumno
+					// No necesitaremos el nia porque en la base de datos es auto_increment
+					// int nia = Integer.parseInt(getTagValue("nia", elementoAlumno));
+					
+					String nombre = getTagValue("nombre", elementoAlumno);
+					String apellidos = getTagValue("apellidos", elementoAlumno);
+					char genero = getTagValue("genero", elementoAlumno).charAt(0);
+					Date fechaNacimiento = Date.valueOf(getTagValue("fechaNacimiento", elementoAlumno));
+					String ciclo = getTagValue("ciclo", elementoAlumno);
+					String curso = getTagValue("curso", elementoAlumno);
+					String grupo = getTagValue("grupo", elementoAlumno);
+
+					// Preparar la sentencia SQL para insertar el alumno en la BD
+					// sin insertar la columna "nia" porque es auto_increment en la BD MySQL:
+					String sql = "INSERT INTO alumno (nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo) VALUES (?, ?, ?, ?, ?, ?, ?)";
+					try (PreparedStatement sentencia = conexionBD.prepareStatement(sql)) {
+						sentencia.setString(1, nombre);
+						sentencia.setString(2, apellidos);
+						sentencia.setString(3, String.valueOf(genero));
+						sentencia.setDate(4, fechaNacimiento);
+						sentencia.setString(5, ciclo);
+						sentencia.setString(6, curso);
+						sentencia.setString(7, grupo);
+						sentencia.executeUpdate();
+					} catch (SQLException e) {
+						System.err.println("Error al insertar el alumno en la base de datos: " + e.getMessage());
+					}
+				}
+			}
+
+			System.out.println("Todos los alumnos han sido guardados en la base de datos.");
+
+		} catch (Exception e) {
+			System.err.println("Error al procesar el archivo XML: " + e.getMessage());
+		}
+	}
+
+	// Método auxiliar para obtener el valor de una etiqueta en un Elemento
+	private String getTagValue(String tag, Element elemento) {
+		NodeList nodeList = elemento.getElementsByTagName(tag);
+		if (nodeList.getLength() > 0) {
+			Node node = nodeList.item(0);
+			return node.getTextContent();
+		}
+		return "";
+	}
+
 }

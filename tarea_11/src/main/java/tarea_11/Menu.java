@@ -82,9 +82,12 @@ public class Menu {
 					System.out.println("Ha elegido: Guardar todos los alumnos en un fichero JSON (con GSON)");
 					gestor.guardarAlumnosEnFicheroJSON(conexionBD.obtenerConexion());
 				}
+				case 12 -> {
+					System.out.println("Ha elegido: Leer un fichero XML de alumnos y guardarlos en la BD");
+					gestor.leerAlumnosDeFicheroXMLYGuardarlosEnBD(conexionBD.obtenerConexion());
+					;
+				}
 
-				case 12 -> System.out.println(
-						"Leer un fichero XML de alumnos y guardarlos en la BD: (Funcionalidad no implementada aún).");
 				case 13 -> System.out.println(
 						"Leer fichero JSON de alumnos y guardarlos en la BD: (Funcionalidad no implementada aún).");
 				case 14 -> System.out.println("Ha elegido SALIR. Hasta pronto.");
