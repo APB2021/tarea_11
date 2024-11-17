@@ -20,6 +20,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -682,22 +683,50 @@ public class GestorAlumnosBD {
 				listaAlumnos.add(alumno);
 			}
 
-			// Solicitar al usuario el nombre del archivo y darle la opción de
-			// personalizarlo
-			System.out.print("Introduce el nombre del archivo (sin la extensión .json): ");
-			String nombreArchivo = sc.nextLine().trim();
+			// Preguntar si quiere usar el nombre por defecto o uno personalizado
+			System.out.print("¿Deseas guardar el archivo con el nombre por defecto 'alumnos.json'? (S/N): ");
+			String respuesta = sc.nextLine().trim().toUpperCase();
 
-			// Verificar si el nombre contiene la extensión .json, si no, añadirla
-			if (!nombreArchivo.endsWith(".json")) {
-				nombreArchivo += ".json";
+			String nombreArchivo;
+			if (respuesta.equals("S")) {
+				nombreArchivo = "alumnos.json"; // Nombre por defecto
+			} else {
+				// Solicitar al usuario el nombre del archivo personalizado
+				System.out.print("Introduce el nombre del archivo (sin la extensión .json): ");
+				nombreArchivo = sc.nextLine().trim();
+
+				// Verificar si el nombre contiene la extensión .json, si no, añadirla
+				if (!nombreArchivo.endsWith(".json")) {
+					nombreArchivo += ".json";
+				}
 			}
 
-			// Convertir la lista de alumnos a JSON con GSON
-			Gson gson = new GsonBuilder().setPrettyPrinting().create();
+			// Verificar si el archivo ya existe
+			File archivo = new File("src\\main\\java\\tarea_11\\" + nombreArchivo);
+			if (archivo.exists()) {
+				// Preguntar al usuario si desea sobrescribir el archivo
+				System.out.print("El archivo ya existe. ¿Deseas sobrescribirlo? (S/N): ");
+				respuesta = sc.nextLine().trim().toUpperCase();
+
+				if (respuesta.equals("N")) {
+					System.out.println("Operación cancelada. El archivo no se ha guardado.");
+					return; // Terminar la operación sin guardar el archivo
+				}
+			}
+
+			// Crear un formato de fecha personalizado para serializar las fechas
+			SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+
+			// Convertir la lista de alumnos a JSON con GSON utilizando un DateFormat
+			Gson gson = new GsonBuilder().setPrettyPrinting().setDateFormat(dateFormat.toPattern()) // Establecer el
+																									// formato de la
+																									// fecha
+					.create();
+
 			String json = gson.toJson(listaAlumnos);
 
 			// Guardar el JSON en un archivo
-			try (FileWriter writer = new FileWriter("src\\main\\java\\tarea_11\\" + nombreArchivo)) {
+			try (FileWriter writer = new FileWriter(archivo)) {
 				writer.write(json);
 				System.out.println("Los alumnos han sido guardados en el archivo JSON: " + nombreArchivo);
 			} catch (IOException e) {
@@ -708,5 +737,4 @@ public class GestorAlumnosBD {
 			System.err.println("Error al obtener los alumnos de la base de datos: " + e.getMessage());
 		}
 	}
-
 }
