@@ -74,9 +74,25 @@ public class Alumno implements Serializable {
 		this.grupo = grupo;
 	}
 
+	public Alumno(String nombre, String apellidos, char genero, Date fechaNacimiento, String ciclo, String curso,
+			String grupo) {
+		super();
+		this.nombre = nombre;
+		this.apellidos = apellidos;
+		this.genero = genero;
+		this.fechaNacimiento = fechaNacimiento;
+		this.ciclo = ciclo;
+		this.curso = curso;
+		this.grupo = grupo;
+	}
+
 	// Getters & Setters:
 	public int getNia() {
 		return nia;
+	}
+
+	public void setNia(int nia) {
+		this.nia = nia;
 	}
 
 	public String getNombre() {
@@ -148,35 +164,32 @@ public class Alumno implements Serializable {
 	 * @author Alberto Polo
 	 * @param listaAlumnos es una lista de objetos de la clase Alumno.
 	 */
-	
-	
-	/*public void generaJSONconGSONdesdeLista(List<Alumno> listaAlumnos) {
 
-		// Antes de convertir la lista a JSON, verificaremos que la lista no sea "null"
-		// ni esté vacía:
-
-		if (listaAlumnos == null || listaAlumnos.isEmpty()) {
-			System.out.println("La lista de alumnos está vacía o es nula. No se generará el archivo JSON.");
-			return;
-		}
-
-		// Crear un objeto Gson con formato "pretty printing" (indentación para
-		// legibilidad)
-
-		Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-		// Convertir la lista de alumnos a un JSON y guardarlo en un archivo
-		String jsonAlumnos = gson.toJson(listaAlumnos);
-
-		// Guardar el JSON en un archivo
-		try (FileWriter fileWriter = new FileWriter("alumnos.json")) {
-			fileWriter.write(jsonAlumnos);
-			System.out.println("Archivo JSON generado correctamente: alumnos.json");
-		} catch (IOException e) {
-			System.out.println("Error al escribir el archivo JSON: " + e.getMessage());
-		}
-	}*/
-	
+	/*
+	 * public void generaJSONconGSONdesdeLista(List<Alumno> listaAlumnos) {
+	 * 
+	 * // Antes de convertir la lista a JSON, verificaremos que la lista no sea
+	 * "null" // ni esté vacía:
+	 * 
+	 * if (listaAlumnos == null || listaAlumnos.isEmpty()) { System.out.
+	 * println("La lista de alumnos está vacía o es nula. No se generará el archivo JSON."
+	 * ); return; }
+	 * 
+	 * // Crear un objeto Gson con formato "pretty printing" (indentación para //
+	 * legibilidad)
+	 * 
+	 * Gson gson = new GsonBuilder().setPrettyPrinting().create();
+	 * 
+	 * // Convertir la lista de alumnos a un JSON y guardarlo en un archivo String
+	 * jsonAlumnos = gson.toJson(listaAlumnos);
+	 * 
+	 * // Guardar el JSON en un archivo try (FileWriter fileWriter = new
+	 * FileWriter("alumnos.json")) { fileWriter.write(jsonAlumnos);
+	 * System.out.println("Archivo JSON generado correctamente: alumnos.json"); }
+	 * catch (IOException e) {
+	 * System.out.println("Error al escribir el archivo JSON: " + e.getMessage()); }
+	 * }
+	 */
 
 	/**
 	 * @author Alberto Polo Método para leer un archivo JSON que contiene una lista
@@ -252,37 +265,32 @@ public class Alumno implements Serializable {
 	 * @param ficheroJSON el archivo JSON que contiene los datos de los alumnos.
 	 */
 	/*
-	public void leerJSONconGSONyMostrarAlumnos(File ficheroJSON) {
-
-		Gson gson = new Gson();
-
-		// Definir el tipo de dato como List<Alumno> para que GSON sepa cómo
-		// deserializar
-		Type tipoListaAlumnos = new TypeToken<List<Alumno>>() {
-		}.getType();
-
-		try (FileReader fileReader = new FileReader(ficheroJSON.getAbsolutePath())) {
-			// Leer y convertir el archivo JSON a una lista de objetos Alumno
-			List<Alumno> listaAlumnos = gson.fromJson(fileReader, tipoListaAlumnos);
-
-			// Mostrar los datos de cada alumno
-			System.out.println("LISTA DE ALUMNOS EN EL FICHERO: " + ficheroJSON.getName());
-			for (Alumno alumno : listaAlumnos) {
-				System.out.println("NIA: " + alumno.getNia());
-				System.out.println("Nombre: " + alumno.getNombre());
-				System.out.println("Apellidos: " + alumno.getApellidos());
-				System.out.println("Género: " + alumno.getGenero());
-				System.out.println("Fecha de Nacimiento: " + alumno.getFechaNacimiento());
-				System.out.println("Ciclo: " + alumno.getCiclo());
-				System.out.println("Curso: " + alumno.getCurso());
-				System.out.println("Grupo: " + alumno.getGrupo());
-				System.out.println("-----------------------------------------------");
-			}
-		} catch (IOException e) {
-			System.out.println("Error al leer el archivo JSON: " + e.getMessage());
-		}
-	}
-	*/
+	 * public void leerJSONconGSONyMostrarAlumnos(File ficheroJSON) {
+	 * 
+	 * Gson gson = new Gson();
+	 * 
+	 * // Definir el tipo de dato como List<Alumno> para que GSON sepa cómo //
+	 * deserializar Type tipoListaAlumnos = new TypeToken<List<Alumno>>() {
+	 * }.getType();
+	 * 
+	 * try (FileReader fileReader = new FileReader(ficheroJSON.getAbsolutePath())) {
+	 * // Leer y convertir el archivo JSON a una lista de objetos Alumno
+	 * List<Alumno> listaAlumnos = gson.fromJson(fileReader, tipoListaAlumnos);
+	 * 
+	 * // Mostrar los datos de cada alumno
+	 * System.out.println("LISTA DE ALUMNOS EN EL FICHERO: " +
+	 * ficheroJSON.getName()); for (Alumno alumno : listaAlumnos) {
+	 * System.out.println("NIA: " + alumno.getNia()); System.out.println("Nombre: "
+	 * + alumno.getNombre()); System.out.println("Apellidos: " +
+	 * alumno.getApellidos()); System.out.println("Género: " + alumno.getGenero());
+	 * System.out.println("Fecha de Nacimiento: " + alumno.getFechaNacimiento());
+	 * System.out.println("Ciclo: " + alumno.getCiclo());
+	 * System.out.println("Curso: " + alumno.getCurso());
+	 * System.out.println("Grupo: " + alumno.getGrupo());
+	 * System.out.println("-----------------------------------------------"); } }
+	 * catch (IOException e) { System.out.println("Error al leer el archivo JSON: "
+	 * + e.getMessage()); } }
+	 */
 
 	/**
 	 * El método recoge los datos de la cantidad especificada en la constante

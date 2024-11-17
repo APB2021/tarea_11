@@ -1,5 +1,8 @@
 package tarea_11;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.EOFException;
@@ -20,6 +23,8 @@ import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -651,6 +656,56 @@ public class GestorAlumnosBD {
 
 		} catch (SQLException e) {
 			System.err.println("Error al guardar los alumnos en el archivo XML: " + e.getMessage());
+		}
+	}
+
+	public void guardarAlumnosEnFicheroJSON(Connection conexionBD) {
+		// Utilizar los nombres correctos de campos en lugar de SELECT *
+		String sql = "SELECT nia, nombre, apellidos, genero, fechaNacimiento, ciclo, curso, grupo FROM alumno";
+
+		// Lista de alumnos
+		List<Alumno> listaAlumnos = new ArrayList<>();
+
+		try (Statement sentencia = conexionBD.createStatement(); ResultSet resultado = sentencia.executeQuery(sql)) {
+
+			// Recorrer el ResultSet y crear los objetos Alumno
+			while (resultado.next()) {
+				// Crear objeto Alumno sin pasar el NIA y utilizando otro de los constructores
+				// de la clase Alumno:
+				Alumno alumno = new Alumno(resultado.getString("nombre"), resultado.getString("apellidos"),
+						resultado.getString("genero").charAt(0), resultado.getDate("fechaNacimiento"),
+						resultado.getString("ciclo"), resultado.getString("curso"), resultado.getString("grupo"));
+
+				// Asignar el NIA usando el setter
+				alumno.setNia(resultado.getInt("nia"));
+
+				listaAlumnos.add(alumno);
+			}
+
+			// Solicitar al usuario el nombre del archivo y darle la opción de
+			// personalizarlo
+			System.out.print("Introduce el nombre del archivo (sin la extensión .json): ");
+			String nombreArchivo = sc.nextLine().trim();
+
+			// Verificar si el nombre contiene la extensión .json, si no, añadirla
+			if (!nombreArchivo.endsWith(".json")) {
+				nombreArchivo += ".json";
+			}
+
+			// Convertir la lista de alumnos a JSON con GSON
+			Gson gson = new GsonBuilder().setPrettyPrinting().create();
+			String json = gson.toJson(listaAlumnos);
+
+			// Guardar el JSON en un archivo
+			try (FileWriter writer = new FileWriter("src\\main\\java\\tarea_11\\" + nombreArchivo)) {
+				writer.write(json);
+				System.out.println("Los alumnos han sido guardados en el archivo JSON: " + nombreArchivo);
+			} catch (IOException e) {
+				System.err.println("Error al guardar el archivo JSON: " + e.getMessage());
+			}
+
+		} catch (SQLException e) {
+			System.err.println("Error al obtener los alumnos de la base de datos: " + e.getMessage());
 		}
 	}
 

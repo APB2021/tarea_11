@@ -78,8 +78,10 @@ public class Menu {
 					gestor.guardarAlumnosEnFicheroXML(conexionBD.obtenerConexion());
 				}
 
-				case 11 -> System.out.println(
-						"Guardar todos los alumnos en un fichero JSON con GSON: (Funcionalidad no implementada aún).");
+				case 11 -> {
+					System.out.println("Ha elegido: Guardar todos los alumnos en un fichero JSON (con GSON)");
+					gestor.guardarAlumnosEnFicheroJSON(conexionBD.obtenerConexion());
+				}
 
 				case 12 -> System.out.println(
 						"Leer un fichero XML de alumnos y guardarlos en la BD: (Funcionalidad no implementada aún).");
@@ -114,7 +116,7 @@ public class Menu {
 						 8. Eliminar un alumno a partir de su (PK).
 						 9. Eliminar los alumnos cuyos apellidos contengan la palabra indicada por el usuario.
 						 10. Guardar todos los alumnos en un fichero XML.
-						 11. Guardar todos los alumnos en un fichero JSON.
+						 11. Guardar todos los alumnos en un fichero JSON (con GSON).
 						 12. Leer un fichero XML de alumnos y guardarlos en la BD.
 						 13. Leer un fichero JSON de alumnos y guardarlos en la BD.
 						 14. Salir.
